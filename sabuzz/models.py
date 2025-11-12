@@ -1,14 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here.
-class Category (models.Model):
-    name = models.CharField(max_length=100)
 
+# Create your models here.
 class Profile(models.Model):
     ROLE_CHOICE = [
         ('admin', 'Admin'),
         ('journalist', 'Journalist'),
+        ('publisher', 'Publisher'),
         ('user', 'User'),
     ]
     user =models.OneToOneField(User, on_delete=models.CASCADE)
@@ -19,7 +18,7 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} Profile"
-    
+
 class Category (models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
@@ -42,7 +41,6 @@ class Post(models.Model):
     image = models.ImageField(upload_to='images/', null=True, blank=True)
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
     status = models.CharField(max_length=10, choices=status_choices, default='Draft')
     views = models.PositiveIntegerField(default=0)
     likes =models.ManyToManyField(User,related_name='liked_posts', blank=True)
@@ -51,14 +49,6 @@ class Post(models.Model):
         return self.title
 
 class Comment(models.Model):
-    post = models.ForeignKey(Category, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    text = models.TextField()
-    date_posted = models.DateField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.post.title}"
-
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
@@ -66,7 +56,7 @@ class Comment(models.Model):
     approved = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.username} - {self.post.title}"
+        return f"Comment by {self.user.username} on {self.post.title}"
 
 
 class Like(models.Model):
@@ -77,6 +67,7 @@ class Like(models.Model):
         return f"{self.user.username} liked {self.post.title}"
     
 class Subscriber(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     email = models.EmailField(unique=True)
     subscribed_at = models.DateTimeField(auto_now_add=True)
 
