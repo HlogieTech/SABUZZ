@@ -1,0 +1,38 @@
+{% extends "sabuzz/base.html" %}
+{% block title %}Journalist Requests{% endblock %}
+
+{% block content %}
+
+<h1 class="text-3xl font-bold mb-6 text-blue-800">Pending Journalist Requests</h1>
+
+{% if requests %}
+    <div class="space-y-4">
+
+        {% for req in requests %}
+        <div class="p-4 bg-white shadow rounded-lg border">
+            <h2 class="text-xl font-semibold">{{ req.user.username }}</h2>
+            <p class="text-gray-700 mt-1">
+                <strong>Reason:</strong> {{ req.reason }}
+            </p>
+
+            <div class="mt-4 flex space-x-4">
+                <a href="{% url 'approve_journalist' req.id %}"
+                   class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    Approve
+                </a>
+
+                <a href="{% url 'reject_journalist' req.id %}"
+                   class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                    Reject
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+{% else %}
+    <p class="text-gray-700 text-lg">No pending requests.</p>
+{% endif %}
+
+{% endblock %}

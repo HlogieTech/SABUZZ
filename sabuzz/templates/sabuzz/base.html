@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{% block title %}SA Buzz{% endblock %}</title>
+
+<style>
+    /* Dark mode styles */
+    body.dark-mode { background-color: #0b1525 !important; color: #f0f0f0 !important; }
+    nav.dark-mode { background-color: #070f1a !important; color: white !important; }
+    .card.dark-mode { background-color: #112033 !important; }
+    .dropdown.dark-mode { background-color: #112033 !important; }
+
+    /* FIX CATEGORY BUTTON COLOR */
+    .category-btn {
+        background-color: #1e293b !important;
+        color: #010c16 !important;
+    }
+</style>
+</head>
+
+<body class="bg-white text-gray-900">
+
+    <!-- NAVBAR -->
+    <nav id="navbar" class="bg-white text-gray-900 py-4 shadow-md">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+
+            <!-- LOGO -->
+            <a href="{% url 'home' %}">
+                <h1 class="text-2xl font-bold text-yellow-500">SA Buzz</h1>
+            </a>
+
+            <!-- NAV LINKS -->
+            <ul class="flex space-x-6 font-medium items-center">
+
+                <li><a href="{% url 'home' %}" class="hover:text-yellow-500">Home</a></li>
+
+                <!-- CATEGORIES -->
+                <li class="relative group">
+                    <button class="px-3 py-1 bg-gray-200 rounded-lg font-semibold group-hover:bg-gray-300">
+                        Categories ▾
+                    </button>
+
+                    <div class="dropdown absolute z-50 hidden group-hover:block bg-white mt-2 rounded-lg shadow p-3 space-y-1">
+                        <a href="{% url 'category' 'sports' %}" class="block hover:text-yellow-400">Sports</a>
+                        <a href="{% url 'category' 'technology' %}" class="block hover:text-yellow-400">Technology</a>
+                        <a href="{% url 'category' 'entertainment' %}" class="block hover:text-yellow-400">Entertainment</a>
+                        <a href="{% url 'category' 'business' %}" class="block hover:text-yellow-400">Business</a>
+                        <a href="{% url 'category' 'politics' %}" class="block hover:text-yellow-400">Politics</a>
+                        <a href="{% url 'category' 'top' %}" class="block hover:text-yellow-400">Trending</a>
+                    </div>
+                </li>
+
+                <li><a href="{% url 'about' %}" class="hover:text-yellow-500">About</a></li>
+                <li><a href="{% url 'contact' %}" class="hover:text-yellow-500">Contact</a></li>
+
+                {% if user.is_authenticated %}
+
+                    <!-- =========================== -->
+                    <!--         ADMIN ONLY          -->
+                    <!-- =========================== -->
+                    {% if user.is_superuser %}
+                        <li>
+                            <a href="{% url 'journalist_requests' %}" class="hover:text-yellow-500 font-semibold">
+                                Approve Journalists
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{% url 'pending_posts' %}" class="hover:text-yellow-500 font-semibold">
+                                Approve Posts
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <!-- JOURNALIST ONLY -->
+                    {% if is_journalist %}
+                        <li><a href="{% url 'dashboard' %}" class="hover:text-yellow-500">Dashboard</a></li>
+                        <li><a href="{% url 'add_post' %}" class="hover:text-yellow-500">Write Post</a></li>
+                        <li><a href="{% url 'comments_list' %}" class="hover:text-yellow-500">Manage Comments</a></li>
+                    {% endif %}
+
+                    <!-- LOGGED-IN USER -->
+                    <li><a href="{% url 'favorites' %}" class="hover:text-yellow-500">Saved</a></li>
+                    <li><a href="{% url 'logout' %}" class="text-red-500 font-semibold">Logout</a></li>
+
+                {% else %}
+
+                    <!-- GUEST -->
+                    <li><a href="{% url 'login' %}" class="hover:text-yellow-500">Login</a></li>
+                    <li><a href="{% url 'register' %}" class="text-yellow-500 font-semibold">Register</a></li>
+
+                {% endif %}
+
+            </ul>
+
+            <!-- WEATHER + DARK MODE -->
+            <div class="flex items-center space-x-4">
+
+                {% if global_weather and global_weather.temperature %}
+                <div id="weatherBox" class="px-3 py-1 rounded-lg bg-gray-200 text-gray-900">
+                    🌤️ JHB: {{ global_weather.temperature }}°C
+                </div>
+                {% endif %}
+
+                <button id="darkToggle"
+                        class="px-3 py-1 rounded-lg bg-yellow-400 text-black font-semibold">
+                    🌙
+                </button>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- PAGE CONTENT -->
+    <div class="container mx-auto px-6 py-10">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- DARK MODE SCRIPT -->
+    <script>
+        const btn = document.getElementById("darkToggle");
+        const navbar = document.getElementById("navbar");
+        const weatherBox = document.getElementById("weatherBox");
+        const dropdowns = document.querySelectorAll(".dropdown");
+
+        if (localStorage.getItem("darkmode") === "on") {
+            document.body.classList.add("dark-mode");
+            navbar.classList.add("dark-mode");
+            if (weatherBox) weatherBox.classList.add("dark-mode");
+            dropdowns.forEach(d => d.classList.add("dark-mode"));
+        }
+
+        btn.addEventListener("click", () => {
+            document.body.classList.toggle("dark-mode");
+            navbar.classList.toggle("dark-mode");
+            if (weatherBox) weatherBox.classList.toggle("dark-mode");
+            dropdowns.forEach(d => d.classList.toggle("dark-mode"));
+
+            localStorage.setItem(
+                "darkmode",
+                document.body.classList.contains("dark-mode") ? "on" : "off"
+            );
+        });
+    </script>
+
+</body>
+</html>

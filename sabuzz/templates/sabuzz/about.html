@@ -1,0 +1,115 @@
+{% extends "sabuzz/base.html" %}
+
+{% block title %}About - SA Buzz{% endblock %}
+
+{% block content %}
+
+<div class="bg-white shadow-lg rounded-xl p-10">
+
+    <!-- PAGE TITLE -->
+    <h1 class="text-4xl font-extrabold text-gray-900 mb-6 text-center">About SA Buzz</h1>
+
+    <!-- APP DESCRIPTION -->
+    <p class="text-lg text-gray-700 leading-relaxed mb-10 text-center">
+        <strong>SA Buzz</strong> is a smart online news platform designed to bring real-time South African 
+        news to everyone , fast, reliable, and beautifully displayed.  
+        Our mission is to make news more accessible, accurate, and easy to navigate.  
+        With features like live news updates, category filtering, search, and weather tracking,  
+        SA Buzz is a modern way to stay informed.
+    </p>
+
+    <!-- TIMELINE -->
+    <div class="mb-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">📅 Project Timeline</h2>
+
+        <div class="space-y-4">
+
+            <div class="border-l-4 border-black pl-4">
+                <p class="text-gray-900 font-semibold">October 2025</p>
+                <p class="text-gray-700">The idea for SA Buzz was created — a centralised platform to access all South African news in one place.</p>
+            </div>
+
+            <div class="border-l-4 border-black pl-4">
+                <p class="text-gray-900 font-semibold">November 2025</p>
+                <p class="text-gray-700">Active development began, building the user interface, API connections, and core features.</p>
+            </div>
+
+            <div class="border-l-4 border-black pl-4">
+                <p class="text-gray-900 font-semibold">November 2025 — Demo</p>
+                <p class="text-gray-700">The first prototype was showcased, demonstrating live news, navigation, and basic UI.</p>
+            </div>
+
+            <div class="border-l-4 border-black pl-4">
+                <p class="text-gray-900 font-semibold">December 2025 — Final Presentation</p>
+                <p class="text-gray-700">Full project presentation with improved UI, admin tools, search, API integration, and weather module.</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TEAM SECTION -->
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">👥 Meet the Team</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <!-- LM -->
+        <div class="flex items-center gap-4 bg-gray-100 p-4 rounded-lg shadow">
+            <div class="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold">
+                LM
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Lehlogonolo Mopai</h3>
+            </div>
+        </div>
+
+        <!-- NS -->
+        <div class="flex items-center gap-4 bg-gray-100 p-4 rounded-lg shadow">
+            <div class="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold">
+                NS
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Ntsoaki Soai</h3>
+            </div>
+        </div>
+
+        <!-- DD -->
+        <div class="flex items-center gap-4 bg-gray-100 p-4 rounded-lg shadow">
+            <div class="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold">
+                DD
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Didintle Ditlhake</h3>
+            </div>
+        </div>
+
+        <!-- SZ -->
+        <div class="flex items-center gap-4 bg-gray-100 p-4 rounded-lg shadow">
+            <div class="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold">
+                SZ
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Sphiwe Zulu</h3>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SUBSCRIBE SECTION -->
+    <div class="mt-14 p-8 bg-black text-white rounded-lg shadow-lg text-center">
+        <h2 class="text-2xl font-bold mb-3">📩 Stay Updated!</h2>
+        <p class="mb-4 text-gray-300">Subscribe and get the latest South African news delivered to your inbox.</p>
+
+        <form method="POST" class="flex justify-center gap-3">
+            {% csrf_token %}
+            <input type="email" name="email" placeholder="Enter your email"
+                   class="px-4 py-2 rounded text-black w-64" required>
+            <button class="bg-yellow-400 px-4 py-2 text-black font-bold rounded hover:bg-yellow-300">
+                Subscribe
+            </button>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}
+

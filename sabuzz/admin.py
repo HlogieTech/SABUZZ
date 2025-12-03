@@ -1,12 +1,11 @@
 from django.contrib import admin
 from .models import Post, Category, Comment, Profile, Like, Subscriber
 
-# Register your models here.
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'role', 'is_subscribed', 'subscription_date')
     list_filter = ('role', 'is_subscribed')
     search_fields = ('user__username', 'user__email')
-    
+
 admin.site.register(Profile, ProfileAdmin)
 
 class CategoryAdmin(admin.ModelAdmin):
@@ -34,19 +33,19 @@ class CommentAdmin(admin.ModelAdmin):
 
     def approve_comments(self, request, queryset):
         queryset.update(approved=True)
-    approve_comments.short_description = "Approved selected comments"
+    approve_comments.short_description = "Approve selected comments"
 
 admin.site.register(Comment, CommentAdmin)
 
 class LikeAdmin(admin.ModelAdmin):
-    list_display =('post', 'user')
+    list_display = ('post', 'user')
     search_fields = ('user__username', 'post__title')
 
 admin.site.register(Like, LikeAdmin)
 
 class SubscriberAdmin(admin.ModelAdmin):
-    list_display =('user', 'email', 'subscribed_at')
+    list_display = ('user', 'email', 'subscribed_at')
     search_fields = ('user__username', 'email')
-    list_filter = ('subscribed_at')
+    list_filter = ('subscribed_at',)   # must be tuple
 
 admin.site.register(Subscriber, SubscriberAdmin)

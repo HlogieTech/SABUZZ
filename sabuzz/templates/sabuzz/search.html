@@ -1,0 +1,38 @@
+{% extends "sabuzz/base.html" %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">
+    Results for: <span class="text-blue-700">"{{ query }}"</span>
+</h1>
+
+{% if articles %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for article in articles %}
+            <div class="bg-white rounded-xl shadow p-4 hover:shadow-xl transition">
+
+                {% if article.image_url %}
+                    <img src="{{ article.image_url }}" class="w-full h-48 object-cover rounded mb-3">
+                {% endif %}
+
+                <h3 class="text-xl font-semibold">{{ article.title }}</h3>
+
+                <p class="text-gray-600 mt-2">
+                    {{ article.description|default:"No description" | truncatewords:20 }}
+                </p>
+
+                <a href="{{ article.link }}" target="_blank"
+                   class="text-blue-600 font-semibold hover:underline mt-3 inline-block">
+                    Read more →
+                </a>
+
+            </div>
+        {% endfor %}
+    </div>
+
+{% else %}
+    <p class="text-gray-700 text-lg">No articles found.</p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "sabuzz/base.html" %}
+
+{% block title %}Home - SABuzz{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6 text-blue-900">Latest South African News</h1>
+
+{% if articles %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for article in articles %}
+    <div class="bg-white shadow-md rounded-lg p-5">
+        <h2 class="text-xl font-semibold">{{ article.title }}</h2>
+        <p class="text-gray-700 mt-2">{{ article.description|default:"No description available." }}</p>
+
+        <a href="{{ article.link }}" target="_blank"
+           class="inline-block mt-3 text-blue-600 font-semibold hover:underline">
+            Read More →
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<p class="text-gray-600 text-lg mt-6">No news found. Try again later.</p>
+{% endif %}
+
+{% endblock %}
+

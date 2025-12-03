@@ -1,0 +1,47 @@
+{% extends "sabuzz/base.html" %}
+{% block title %}Weather - SA Buzz{% endblock %}
+
+{% block content %}
+
+<h1 class="text-4xl font-bold mb-6 text-blue-900">SA Weather</h1>
+
+{% if weather %}
+<!-- CURRENT WEATHER CARD -->
+<div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mb-10">
+
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-xl font-semibold text-gray-800">Current Weather</h2>
+            <p class="text-gray-500">Johannesburg, South Africa</p>
+        </div>
+        <div class="text-5xl">🌤️</div>
+    </div>
+
+    <p class="text-5xl font-bold mt-4">{{ weather.temperature }}°C</p>
+
+    <div class="mt-4 grid grid-cols-2 gap-2 text-gray-700">
+        <p><strong>Wind:</strong> {{ weather.windspeed }} km/h</p>
+        <p><strong>Direction:</strong> {{ weather.winddirection }}°</p>
+        <p><strong>Condition Code:</strong> {{ weather.weathercode }}</p>
+    </div>
+
+</div>
+
+{% endif %}
+
+<!-- 7-DAY FORECAST -->
+<h2 class="text-2xl font-bold mb-4 text-blue-900">7-Day Forecast</h2>
+
+<div class="grid md:grid-cols-3 gap-6">
+    {% for day, t_min, t_max, code in forecast %}
+    <div class="bg-white p-4 rounded-xl shadow-md text-center">
+        <p class="font-semibold text-gray-800">{{ day }}</p>
+        <div class="text-4xl my-2">🌤️</div>
+        <p class="text-gray-600">Min: {{ t_min }}°C</p>
+        <p class="text-gray-800 font-bold">Max: {{ t_max }}°C</p>
+        <p class="text-gray-500">Code: {{ code }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

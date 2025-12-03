@@ -1,0 +1,44 @@
+{% extends "sabuzz/base.html" %}
+
+{% block title %}Subscribers | SA Buzz{% endblock %}
+
+{% block content %}
+
+<h1 class="text-3xl font-bold text-yellow-400 mb-6 text-center">
+    Newsletter Subscribers
+</h1>
+
+<div class="bg-[#0b1525] dark:bg-[#112033] p-6 rounded-xl shadow-lg text-gray-200">
+
+    {% if subscribers %}
+        <table class="w-full text-left">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="py-3">#</th>
+                    <th class="py-3">Email</th>
+                    <th class="py-3">User</th>
+                    <th class="py-3">Subscribed At</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for s in subscribers %}
+                <tr class="border-b border-gray-800 hover:bg-[#112033]">
+                    <td class="py-3">{{ forloop.counter }}</td>
+                    <td class="py-3">{{ s.email }}</td>
+                    <td class="py-3">{{ s.user.username }}</td>
+                    <td class="py-3">{{ s.subscribed_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p class="text-center text-gray-300 py-6">
+            No subscribers yet.
+        </p>
+    {% endif %}
+
+</div>
+
+{% endblock %}

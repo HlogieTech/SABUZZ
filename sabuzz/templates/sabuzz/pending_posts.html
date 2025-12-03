@@ -1,0 +1,28 @@
+{% extends "sabuzz/base.html" %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Pending Posts</h1>
+
+{% if posts %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for post in posts %}
+        <div class="bg-white p-4 rounded shadow">
+            <h2 class="text-xl font-semibold">{{ post.title }}</h2>
+            <p class="text-gray-700 mt-2">{{ post.content|truncatewords:25 }}</p>
+
+            <div class="mt-4 flex space-x-2">
+                <a href="{% url 'approve_post' post.id %}" class="px-4 py-2 bg-green-600 text-white rounded">
+                    Approve
+                </a>
+                <a href="{% url 'reject_post' post.id %}" class="px-4 py-2 bg-red-600 text-white rounded">
+                    Reject
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+{% else %}
+    <p>No pending posts.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+from rest_framework import serializers
+from sabuzz.models import Post
+
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = [
+            'id',
+            'title',
+            'content',
+            'author',
+            'created_at',
+            'category',
+            'status',
+        ]
