@@ -1,0 +1,42 @@
+{% extends "sabuzz/base.html" %}
+
+{% block title %}Edit Post | SA Buzz{% endblock %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto">
+
+    <h1 class="text-3xl font-bold mb-6">Edit Post</h1>
+
+    <form method="POST" class="bg-white p-6 rounded-lg shadow">
+        {% csrf_token %}
+
+        <!-- Title -->
+        <label class="block font-semibold mb-1">Title</label>
+        <input type="text" name="title" value="{{ post.title }}"
+               class="w-full p-3 border rounded mb-4" required>
+
+        <!-- Content -->
+        <label class="block font-semibold mb-1">Content</label>
+        <textarea name="content" rows="8"
+                  class="w-full p-3 border rounded mb-4"
+                  required>{{ post.content }}</textarea>
+
+        <!-- Category -->
+        <label class="block font-semibold mb-1">Category</label>
+        <select name="category" class="w-full p-3 border rounded mb-6">
+            {% for c in categories %}
+                <option value="{{ c.id }}" {% if post.category.id == c.id %}selected{% endif %}>
+                    {{ c.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button class="bg-blue-500 text-white px-5 py-2 rounded font-semibold">
+            Save Changes
+        </button>
+    </form>
+
+</div>
+
+{% endblock %}

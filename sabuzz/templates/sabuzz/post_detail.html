@@ -5,51 +5,112 @@
 {% block content %}
 <div class="max-w-3xl mx-auto">
 
-    <!-- POST TITLE -->
     <h1 class="text-4xl font-bold mb-4">{{ post.title }}</h1>
 
-    <!-- POST AUTHOR & DATE -->
-    <p class="text-gray-400 mb-6">
-        Posted by <span class="font-semibold">{{ post.author.username }}</span>
-        • {{ post.created_at|date:"F j, Y" }}
+    <p class="text-gray-600 mb-6">
+        Posted by <strong>{{ post.author.username }}</strong> •
+        {{ post.created_at|date:"F j, Y" }}
     </p>
 
     <!-- POST CONTENT -->
-    <div class="bg-white dark:bg-[#112033] p-6 rounded-lg shadow-md mb-10">
+    <div class="bg-white p-6 rounded-lg shadow mb-12">
         {{ post.content|linebreaks }}
     </div>
 
+    <!-- ============================= -->
+    <!-- EDIT + DELETE POST (Author/Admin) -->
+    <!-- ============================= -->
+    {% if user.is_authenticated %}
+        {% if user == post.author %}
+            {% with can_edit=True %}
+            {% endwith %}
+        {% elif user.is_superuser %}
+            {% with can_edit=True %}
+            {% endwith %}
+        {% endif %}
+    {% endif %}
+
+    {% if can_edit %}
+    <div class="flex space-x-4 mb-10">
+
+        <a href="{% url 'edit_post' post.id %}"
+           class="bg-blue-500 text-white px-4 py-2 rounded">
+            ✏️ Edit Post
+        </a>
+
+        <form method="POST" action="{% url 'delete_post' post.id %}">
+            {% csrf_token %}
+            <button class="bg-red-500 text-white px-4 py-2 rounded"
+                    onclick="return confirm('Delete this post?');">
+                🗑 Delete Post
+            </button>
+        </form>
+
+    </div>
+    {% endif %}
+
+    <!-- ============================= -->
     <!-- COMMENTS SECTION -->
+    <!-- ============================= -->
+
     <h2 class="text-2xl font-bold mb-4">Comments</h2>
 
-    <!-- LIST COMMENTS -->
-    {% for c in comments %}
-        <div class="bg-gray-100 dark:bg-[#0b1525] p-4 rounded-lg mb-3">
-            <p class="font-semibold">{{ c.user.username }}</p>
-            <p>{{ c.content }}</p>
-            <p class="text-gray-400 text-sm">{{ c.created_at|date:"F j, Y, g:i A" }}</p>
-        </div>
-    {% empty %}
-        <p class="text-gray-400">No comments yet — be the first to comment!</p>
-    {% endfor %}
+    {% if comments %}
+        {% for c in comments %}
+            <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                <p class="font-semibold">{{ c.user.username }}</p>
+                <p class="mt-1">{{ c.text|linebreaks }}</p>
 
-    <!-- ADD COMMENT (only logged in) -->
-    {% if user.is_authenticated %}
-    <form method="POST" class="mt-6 bg-white dark:bg-[#112033] p-6 rounded-lg shadow-lg">
-        {% csrf_token %}
-        <textarea name="content" class="w-full p-3 border rounded-lg" rows="4"
-                  placeholder="Write your comment..." required></textarea>
-        <button class="mt-3 bg-yellow-500 hover:bg-yellow-600 text-black px-5 py-2 rounded-lg font-semibold">
-            Post Comment
-        </button>
-    </form>
+                <p class="text-sm text-gray-500">
+                    {{ c.date_posted|date:"F j, Y, g:i A" }}
+                </p>
+
+                <!-- EDIT/DELETE comment for owner or admin -->
+                {% if user.is_authenticated %}
+                    {% if user == c.user or user.is_superuser %}
+                        <div class="mt-3 flex space-x-3">
+
+                            <a href="{% url 'edit_comment' c.id %}"
+                               class="text-blue-600 underline">
+                               ✏️ Edit
+                            </a>
+
+                            <form method="POST" action="{% url 'delete_comment' c.id %}">
+                                {% csrf_token %}
+                                <button class="text-red-600 underline"
+                                        onclick="return confirm('Delete this comment?');">
+                                    🗑 Delete
+                                </button>
+                            </form>
+
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endfor %}
     {% else %}
-        <p class="mt-4">
-            <a href="{% url 'login' %}" class="text-yellow-400 underline">Login to comment</a>
+        <p class="text-gray-500">No comments yet — be the first to comment!</p>
+    {% endif %}
+
+    <!-- ADD COMMENT -->
+    {% if user.is_authenticated %}
+        <form method="POST" class="mt-8 bg-white p-6 rounded-lg shadow">
+            {% csrf_token %}
+            <textarea name="content" rows="4"
+                      class="w-full p-3 border rounded-lg"
+                      placeholder="Write your comment..." required></textarea>
+
+            <button class="mt-3 bg-yellow-500 px-5 py-2 rounded-lg text-black font-semibold">
+                Post Comment
+            </button>
+        </form>
+    {% else %}
+        <p class="mt-4 text-gray-700">
+            <a href="{% url 'login' %}" class="text-yellow-400 underline">
+                Login to comment
+            </a>
         </p>
     {% endif %}
 
 </div>
 {% endblock %}
-
-

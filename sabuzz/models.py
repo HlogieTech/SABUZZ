@@ -1,7 +1,13 @@
+# sabuzz/models.py
 from django.db import models
 from django.contrib.auth.models import User
 
 
+from django.conf import settings
+from django.db import models
+from django.utils import timezone
+
+User = settings.AUTH_USER_MODEL
 # ============================================================
 # CATEGORY
 # ============================================================
@@ -20,7 +26,7 @@ class Post(models.Model):
     STATUS_CHOICES = (
         ("draft", "Draft"),
         ("published", "Published"),
-        ("pending", "Pending Approval"),   # for journalist posts
+        ("pending", "Pending Approval"),
     )
 
     title = models.CharField(max_length=200)
@@ -53,13 +59,31 @@ class Comment(models.Model):
 # SUBSCRIBERS
 # ============================================================
 class Subscriber(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    email = models.EmailField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    email = models.EmailField(unique=True)
     subscribed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.email
 
+class Notification(models.Model):
+    """
+    Simple notification model — generic_text for message and optional links.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    verb = models.CharField(max_length=200)          # e.g. "Your comment was approved"
+    created_at = models.DateTimeField(default=timezone.now)
+    read = models.BooleanField(default=False)
+    # Optional extras for linking to related objects
+    target_post = models.ForeignKey("Post", null=True, blank=True, on_delete=models.CASCADE)
+    target_comment = models.ForeignKey("Comment", null=True, blank=True, on_delete=models.CASCADE)
+    extra_data = models.JSONField(null=True, blank=True)  # flexible metadata
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Notification to {self.user}: {self.verb}"
 
 # ============================================================
 # USER PROFILE

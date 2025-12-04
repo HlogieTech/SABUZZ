@@ -15,19 +15,13 @@
         <h2 class="text-3xl font-bold text-center text-[#0b1525] mb-4">
             Login
         </h2>
+{% if pending_request %}
+    <p class="text-center text-yellow-500 font-semibold mb-4">
+        Your journalist application is still pending approval.
+    </p>
+{% endif %}
 
-        <!-- DJANGO MESSAGES -->
-        {% if messages %}
-            <div class="mb-4 space-y-1">
-                {% for message in messages %}
-                    <p class="text-center text-red-600 font-medium">
-                        {{ message }}
-                    </p>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <!-- ONLY ONE FORM (FIXED!) -->
+        <!-- LOGIN FORM (no global messages here) -->
         <form method="POST" action="{% url 'login' %}">
             {% csrf_token %}
 

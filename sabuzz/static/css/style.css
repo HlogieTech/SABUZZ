@@ -97,6 +97,63 @@ body {
     color: #101113;
     margin-top: 8px;
 }
+/* Base reset for details/summary */
+.nav-details { position: relative; display: inline-block; }
+.nav-details summary {
+  list-style: none;           /* remove marker */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .4rem .8rem;
+  border-radius: .5rem;
+  background: #fee2b3;        /* light yellow-ish; change as needed */
+  color: #92400e;            /* dark text */
+  font-weight: 600;
+  outline: none;
+}
+.nav-details summary::-webkit-details-marker { display: none; } /* hide default marker */
+
+.nav-menu {
+  display: none;
+  position: absolute;
+  right: 0;                   /* align right edge of menu to button */
+  top: calc(100% + 0.5rem);
+  min-width: 180px;
+  z-index: 60;                /* ensure on top */
+  background: white;
+  border-radius: .5rem;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+  padding: .5rem;
+}
+
+/* Menu items */
+.nav-item {
+  display: block;
+  padding: .5rem .75rem;
+  border-radius: .375rem;
+  color: #0b1525;
+  text-decoration: none;
+}
+.nav-item:hover,
+.nav-item:focus {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Show when details is open (click or keyboard) */
+.nav-details[open] > .nav-menu {
+  display: block;
+}
+
+/* Optional: allow hover to open on non-touch devices (progressive enhancement) */
+@media (hover: hover) and (pointer: fine) {
+  .nav-details:hover > .nav-menu { display: block; }
+}
+
+/* Fix overlap issues: make sure navbar and menu stacking works */
+#navbar { z-index: 10; }      /* your navbar should be below menus; menu z-index is larger */
+
 
 /* -----------------------------------------
    FOOTER ALIGNMENT FIX
