@@ -5,10 +5,11 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.contrib import messages
 
 from .forms import CustomRegisterForm
 from .models import (
@@ -114,7 +115,33 @@ def logout_user(request):
     logout(request)
     return redirect("home")
 
+"""
+Manual password reset view.
+GET: Show reset form
+POST: Process password reset
+"""
 
+def manual_reset(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, "sabuzz/manual_reset.html")
+        
+        try:
+            user = User.objects.get(username=username)
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, "Password reset successful. You can now log in.")
+            return redirect("login")
+        except User.DoesNotExist:
+            messages.error(request, "Username does not exist.")
+            return render(request, "sabuzz/manual_reset.html")
+        
+    return render(request, "sabuzz/manual_reset.html")
 # ============================================================
 # REGISTER
 # ============================================================
