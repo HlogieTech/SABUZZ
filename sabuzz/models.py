@@ -1,13 +1,11 @@
 # sabuzz/models.py
 from django.db import models
 from django.contrib.auth.models import User
-
-
 from django.conf import settings
-from django.db import models
 from django.utils import timezone
 
 User = settings.AUTH_USER_MODEL
+
 # ============================================================
 # CATEGORY
 # ============================================================
@@ -20,7 +18,7 @@ class Category(models.Model):
 
 
 # ============================================================
-# LOCAL POSTS
+# POSTS
 # ============================================================
 class Post(models.Model):
     STATUS_CHOICES = (
@@ -52,7 +50,7 @@ class Comment(models.Model):
     approved = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Comment by {self.user.username}"
+        return f"Comment by {self.user}"
 
 
 # ============================================================
@@ -66,18 +64,18 @@ class Subscriber(models.Model):
     def __str__(self):
         return self.email
 
+
+# ============================================================
+# NOTIFICATIONS
+# ============================================================
 class Notification(models.Model):
-    """
-    Simple notification model — generic_text for message and optional links.
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
-    verb = models.CharField(max_length=200)          # e.g. "Your comment was approved"
+    verb = models.CharField(max_length=200)
     created_at = models.DateTimeField(default=timezone.now)
     read = models.BooleanField(default=False)
-    # Optional extras for linking to related objects
     target_post = models.ForeignKey("Post", null=True, blank=True, on_delete=models.CASCADE)
     target_comment = models.ForeignKey("Comment", null=True, blank=True, on_delete=models.CASCADE)
-    extra_data = models.JSONField(null=True, blank=True)  # flexible metadata
+    extra_data = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ("-created_at",)
@@ -85,18 +83,36 @@ class Notification(models.Model):
     def __str__(self):
         return f"Notification to {self.user}: {self.verb}"
 
+
 # ============================================================
-# USER PROFILE
+# PROFILE SYSTEM (Roles: User, Journalist, Admin)
 # ============================================================
 class Profile(models.Model):
+    ROLE_CHOICES = (
+        ("user", "User"),
+        ("journalist", "Journalist"),
+        ("admin", "Admin"),
+    )
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="user")
     profile_image = models.ImageField(upload_to="profiles/", blank=True, null=True)
-    role = models.CharField(max_length=100, blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
     is_subscribed = models.BooleanField(default=False)
     subscription_date = models.DateTimeField(blank=True, null=True)
 
+    # Extra fields for Admin
+    admin_title = models.CharField(max_length=100, blank=True, null=True)
+    staff_id = models.CharField(max_length=50, blank=True, null=True)
+
+    # Extra fields for Journalist
+    full_name = models.CharField(max_length=150, blank=True, null=True)
+    organisation = models.CharField(max_length=200, blank=True, null=True)
+    press_id = models.CharField(max_length=50, blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
+
     def __str__(self):
-        return self.user.username
+        return f"{self.user.username} ({self.role})"
 
 
 # ============================================================
@@ -157,7 +173,7 @@ class SavedPost(models.Model):
 
 
 # ============================================================
-# JOURNALIST APPLICATION SYSTEM
+# JOURNALIST REQUEST SYSTEM
 # ============================================================
 class JournalistRequest(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -175,3 +191,22 @@ class JournalistRequest(models.Model):
 
     def __str__(self):
         return f"Journalist Request - {self.user.username} ({self.status})"
+
+class Activity(models.Model):
+    ACTIVITY_TYPES = [
+        ('post', 'Post'),
+        ('comment', 'Comment'),
+        ('like', 'Like'),
+        ('subscriber', 'Subscriber'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    type = models.CharField(max_length=20, choices=ACTIVITY_TYPES)
+    object = models.ForeignKey(
+        Post, blank=True, null=True, on_delete=models.CASCADE
+    )  # For posts/comments/likes
+    timestamp = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(blank=True)  # Optional for custom text
+
+    def __str__(self):
+        return f"{self.user.username} - {self.type}"
+        

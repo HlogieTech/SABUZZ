@@ -17,6 +17,7 @@ urlpatterns = [
     # -------------------------
     path("login/", views.login_user, name="login"),
     path("logout/", views.logout_user, name="logout"),
+    path("manual-reset/", views.manual_reset, name="manual_reset"),
 
     path("register/", views.register_user, name="register"),
 
@@ -25,8 +26,8 @@ urlpatterns = [
     # -------------------------
     path("dashboard/", views.dashboard, name="dashboard"),
     path("add-post/", views.add_post, name="add_post"),
-    path("post/<int:post_id>/edit/", views.edit_post, name="edit_post"),
-    path("post/<int:post_id>/delete/", views.delete_post, name="delete_post"),
+    path("post/<int:post_id>/edit/", views.edit_post, name="add_post"),
+    path("post/<int:post_id>/delete/", views.delete_post, name="confirm_delete"),
 
     # -------------------------
     # Admin Post Approval
@@ -34,6 +35,11 @@ urlpatterns = [
     path("dashboard/pending-posts/", views.pending_posts, name="pending_posts"),
     path("dashboard/pending-posts/<int:post_id>/approve/", views.approve_post, name="approve_post"),
     path("dashboard/pending-posts/<int:post_id>/reject/", views.reject_post, name="reject_post"),
+    path("dashboard/users/", views.dashboard_users, name="dashboard_users"),
+    path("dashboard/posts/", views.dashboard_posts, name="dashboard_posts"),
+    path("dashboard/comments/", views.dashboard_comments, name="dashboard_comments"),
+    path("dashboard/users/edit/<int:user_id>/", views.edit_user, name="edit_user"),
+    path("dashboard/users/delete/<int:user_id>/", views.delete_user, name="delete_user"),
 
     # -------------------------
     # Journalist Requests (Admin)
@@ -41,6 +47,8 @@ urlpatterns = [
     path("journalist-requests/", views.journalist_requests, name="journalist_requests"),
     path("journalist-requests/<int:req_id>/approve/", views.approve_journalist, name="approve_journalist"),
     path("journalist-requests/<int:req_id>/reject/", views.reject_journalist, name="reject_journalist"),
+    path('profile/', views.profile_detail, name='profile_detail'),
+    path('profile/update/', views.update_profile, name='update_profile'),
 
     # -------------------------
     # Comments CRUD
@@ -84,8 +92,8 @@ path("favorites/remove/<int:fav_id>/", views.remove_favorite, name="remove_favor
     # API Posts Page
     # -------------------------
     path("posts/", views.posts_page, name="posts_page"),
-     
-     # -------------------------------------
+
+    # -------------------------------------
 # User CRUD – Comments (Edit/Delete)
 # -------------------------------------
 path("comment/<int:comment_id>/edit/", views.edit_comment, name="edit_comment"),

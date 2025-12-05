@@ -1,110 +1,107 @@
 {% extends "sabuzz/base.html" %}
-
 {% block title %}Home - SA Buzz{% endblock %}
 
 {% block content %}
-
+<!-- USER PROFILE HEADER -->
+{% if profile %}
+<div class="flex items-center space-x-4 bg-gray-100 dark:bg-[#112033] p-4 rounded-xl shadow mb-6">
+    {% if profile.profile_image %}
+    <img src="{{ profile.profile_image.url }}" alt="Profile Image"
+        class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">
+    {% else %}
+    <div class="w-16 h-16 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
+        <span class="text-gray-900 dark:text-white font-bold text-lg">{{ profile.user.username|slice:":1"|upper }}</span>
+    </div>
+    {% endif %}
+    <div>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ profile.user.username }}</h2>
+        <p class="text-gray-600 dark:text-gray-300 capitalize">{{ profile.role|default:"User" }}</p>
+    </div>
+</div>
+{% endif %}
+ 
 <!-- HERO -->
 <div class="bg-black text-white rounded-xl p-10 shadow-lg mb-10">
     <h1 class="text-4xl font-bold mb-2">SA Buzz</h1>
     <p class="text-lg">Your intelligent gateway to real-time South African news.</p>
 </div>
-
+ 
 <!-- SEARCH BAR -->
 <div class="flex mb-8">
     <form class="flex w-full" method="GET" action="{% url 'search' %}">
-        <input type="text" name="q"
-               placeholder="Search news headlines..."
-               class="w-full p-3 rounded-l-lg bg-white text-black shadow">
-        <button class="bg-yellow-400 text-black px-6 rounded-r-lg font-semibold">
-            Search
-        </button>
+        <input type="text" name="q" placeholder="Search news headlines..."
+            class="w-full p-3 rounded-l-lg bg-white dark:bg-gray-800 text-black dark:text-white shadow">
+        <button class="bg-yellow-400 text-black px-6 rounded-r-lg font-semibold"> Search </button>
     </form>
 </div>
-
+ 
 <!-- TRENDING BAR -->
 {% if articles %}
 <div class="bg-yellow-400 text-black p-4 rounded-lg mb-10 flex items-center space-x-3">
     <span class="text-xl">🔥</span>
     <span class="font-semibold">Trending:</span>
-    <span>{{ articles.0.title|default:"" }}</span>
+    <span>{{ articles.0.title|default:"No trending news" }}</span>
 </div>
 {% endif %}
-
-<!-- SECTION TITLE -->
-<h2 class="text-2xl font-bold mb-4">Latest South African News</h2>
-
+ 
 <!-- API NEWS ARTICLES -->
+<h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Latest South African News</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
     {% for article in articles %}
-    <div class="bg-white text-black rounded-xl shadow-md p-4">
-
+    <div class="bg-white dark:bg-[#112033] text-black dark:text-white rounded-xl shadow-md p-4 flex flex-col">
         {% if article.image_url %}
         <img src="{{ article.image_url }}" class="w-full h-48 object-cover rounded-md mb-3">
         {% else %}
-        <div class="w-full h-48 bg-gray-200 flex items-center justify-center rounded-md mb-3">
+        <div class="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-md mb-3">
             No Image Available
         </div>
         {% endif %}
-
-        <h3 class="text-xl font-semibold mb-2">{{ article.title }}</h3>
-
-        <p class="text-gray-700 mb-3">{{ article.description|truncatewords:20 }}</p>
-
+        <h3 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">{{ article.title }}</h3>
+        <p class="text-gray-700 dark:text-gray-300 mb-3">{{ article.description|truncatewords:20 }}</p>
         <a href="{{ article.link }}" target="_blank"
-           class="inline-block bg-[#0b1525] text-white px-4 py-2 rounded-lg mb-3">
-           Read More →
-        </a>
-
-        <form method="POST" action="{% url 'save_article' %}">
+            class="inline-block bg-[#0b1525] text-white px-4 py-2 rounded-lg mb-3"> Read More → </a>
+        {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'save_article' %}" class="mt-auto">
             {% csrf_token %}
             <input type="hidden" name="title" value="{{ article.title }}">
             <input type="hidden" name="description" value="{{ article.description }}">
             <input type="hidden" name="url" value="{{ article.link }}">
             <input type="hidden" name="image_url" value="{{ article.image_url }}">
             <input type="hidden" name="source_name" value="{{ article.source_id }}">
-
-            <button class="bg-yellow-400 text-black w-full py-2 rounded-lg mt-2 font-semibold">
-                ⭐ Save Article
-            </button>
+            <button
+                class="bg-yellow-400 text-black dark:text-black w-full py-2 rounded-lg mt-2 font-semibold"> ⭐ Save
+                Article </button>
         </form>
+        {% endif %}
     </div>
+    {% empty %}
+    <p class="text-gray-500 dark:text-gray-300">No news articles available.</p>
     {% endfor %}
 </div>
-
+ 
 <!-- LOCAL POSTS SECTION -->
-<h2 class="text-2xl font-bold mt-12 mb-4">Latest Journalist Posts</h2>
-
+<h2 class="text-2xl font-bold mt-12 mb-4 text-gray-900 dark:text-white">Latest Journalist Posts</h2>
 {% if local_posts %}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
     {% for post in local_posts %}
-    <div class="bg-white text-black rounded-xl shadow-md p-4">
-
+    <div class="bg-white dark:bg-[#112033] text-black dark:text-white rounded-xl shadow-md p-4 flex flex-col">
         {% if post.image %}
         <img src="{{ post.image.url }}" class="w-full h-48 object-cover rounded-md mb-3">
         {% else %}
-        <div class="w-full h-48 bg-gray-200 flex items-center justify-center rounded-md mb-3">
+        <div class="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-md mb-3">
             No Image
         </div>
         {% endif %}
-
-        <h3 class="text-xl font-semibold mb-2">{{ post.title }}</h3>
-
-        <p class="text-gray-700 mb-3">{{ post.content|truncatewords:20 }}</p>
-
+        <h3 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">{{ post.title }}</h3>
+        <p class="text-gray-700 dark:text-gray-300 mb-3">{{ post.content|truncatewords:20 }}</p>
         <a href="{% url 'post_detail' post.id %}"
-           class="inline-block bg-yellow-400 text-black px-4 py-2 rounded-lg mb-3">
-           Read More →
+            class="inline-block bg-yellow-400 text-black dark:text-black px-4 py-2 rounded-lg mt-auto"> Read More →
         </a>
-
     </div>
     {% endfor %}
-
 </div>
 {% else %}
-<p class="text-gray-500">No approved posts yet.</p>
+<p class="text-gray-500 dark:text-gray-300">No approved posts yet.</p>
 {% endif %}
-
+ 
 {% endblock %}

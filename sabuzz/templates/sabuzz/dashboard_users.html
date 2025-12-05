@@ -1,0 +1,36 @@
+{% extends "sabuzz/base.html" %}
+{% block title %}Manage Users - SA Buzz{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Manage Users</h1>
+
+<table class="min-w-full bg-white dark:bg-[#112033] rounded-lg overflow-hidden shadow">
+    <thead class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+        <tr>
+            <th class="py-3 px-6 text-left">ID</th>
+            <th class="py-3 px-6 text-left">Username</th>
+            <th class="py-3 px-6 text-left">Email</th>
+            <th class="py-3 px-6 text-left">Date Joined</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr class="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <td class="py-3 px-6">{{ user.id }}</td>
+            <td class="py-3 px-6">{{ user.username }}</td>
+            <td class="py-3 px-6">{{ user.email }}</td>
+            <td class="py-3 px-6">{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+            <td class="py-3 px-6 flex space-x-2">
+            <a href="{% url 'edit_user' user.id %}" class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Edit</a>
+            <form action="{% url 'delete_user' user.id %}" method="POST" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="return confirm('Delete this user?');">Delete</button>
+            </form>
+        </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="py-3 px-6 text-center">No users found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

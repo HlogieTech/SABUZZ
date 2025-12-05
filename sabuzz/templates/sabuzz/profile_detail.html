@@ -1,0 +1,56 @@
+{% extends 'sabuzz/base.html' %}
+{% block title %}Profile - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-10">
+    <div class="bg-white dark:bg-[#112033] p-6 rounded-xl shadow-md max-w-3xl mx-auto">
+        <!-- PROFILE HEADER -->
+        <div class="flex items-center space-x-6">
+            {% if profile.profile_image %}
+                <img src="{{ profile.profile_image.url }}" alt="{{ profile.full_name|default:profile.user.username }}" class="w-32 h-32 rounded-full object-cover border-2 border-yellow-400">
+            {% else %}
+                <div class="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold text-4xl border-2 border-yellow-400">
+                    {{ profile.user.username|slice:":1"|upper }}
+                </div>
+            {% endif %}
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ profile.full_name|default:profile.user.username }}</h1>
+                <p class="text-gray-600 dark:text-gray-300 capitalize">{{ profile.role|default:"User" }}</p>
+                {% if profile.is_verified %}
+                    <span class="px-2 py-1 bg-yellow-400 text-black rounded-full text-sm font-semibold mt-1 inline-block">Verified</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- PROFILE DETAILS -->
+        <div class="mt-6 space-y-3 text-gray-800 dark:text-gray-200">
+            {% if profile.bio %}
+                <p><strong>Bio:</strong> {{ profile.bio }}</p>
+            {% endif %}
+
+            {% if profile.role == "admin" %}
+                {% if profile.admin_title %}<p><strong>Title:</strong> {{ profile.admin_title }}</p>{% endif %}
+                {% if profile.staff_id %}<p><strong>Staff ID:</strong> {{ profile.staff_id }}</p>{% endif %}
+                {% if profile.organization %}<p><strong>Organization:</strong> {{ profile.organization }}</p>{% endif %}
+            {% elif profile.role == "journalist" %}
+                {% if profile.press_id %}<p><strong>Press ID:</strong> {{ profile.press_id }}</p>{% endif %}
+                {% if profile.organization %}<p><strong>Organization:</strong> {{ profile.organization }}</p>{% endif %}
+            {% endif %}
+
+            <!-- SUBSCRIPTION STATUS -->
+            {% if profile.is_subscribed %}
+                <p class="text-green-600 dark:text-green-400 font-semibold">
+                    Subscribed since {{ profile.subscription_date|date:"M d, Y" }}
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- EDIT BUTTON -->
+        <div class="mt-6">
+            <a href="{% url 'update_profile' %}" class="bg-yellow-400 text-black px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500">
+                Edit Profile
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

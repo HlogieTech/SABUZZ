@@ -1,0 +1,75 @@
+{% extends 'sabuzz/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Update Profile - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-10">
+    <div class="bg-white dark:bg-[#112033] p-6 rounded-xl shadow-md max-w-3xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Update Profile</h1>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+
+            <!-- Profile Image -->
+            <div class="flex items-center space-x-4">
+                {% if form.instance.profile_image %}
+                    <img src="{{ form.instance.profile_image.url }}" alt="Profile Image" class="w-24 h-24 rounded-full object-cover">
+                {% else %}
+                    <div class="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold text-2xl">
+                        {{ user.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+                <div class="flex-1">
+                    <label class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Change Profile Picture</label>
+                    {{ form.profile_image|add_class:"w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" }}
+                </div>
+            </div>
+
+            <!-- Bio -->
+            <div>
+                <label class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Bio</label>
+                {{ form.bio|add_class:"w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" }}
+            </div>
+
+            <!-- Role Specific Fields -->
+            {% if profile.role == "admin" %}
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Admin Title</label>
+                    {{ form.admin_title|add_class:"w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" }}
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Staff ID</label>
+                    {{ form.staff_id|add_class:"w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" }}
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Organization</label>
+                    {{ form.organization|add_class:"w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" }}
+                </div>
+            {% elif profile.role == "journalist" %}
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Press ID</label>
+                    {{ form.press_id|add_class:"w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" }}
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Organization</label>
+                    {{ form.organization|add_class:"w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" }}
+                </div>
+            {% endif %}
+
+            <!-- Full Name -->
+            <div>
+                <label class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Full Name</label>
+                {{ form.full_name|add_class:"w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" }}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-4 flex items-center space-x-4">
+                <button type="submit" class="bg-yellow-400 text-black px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500">Save Changes</button>
+                <a href="{% url 'profile_detail' %}" class="text-gray-600 dark:text-gray-300 hover:underline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

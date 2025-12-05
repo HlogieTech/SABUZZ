@@ -4,15 +4,19 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.http import HttpResponseRedirect, HttpResponseForbidden, Http404
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from .forms import UserProfileForm, JournalistProfileForm, AdminProfileForm, ProfileForm
+from .models import Profile
+from django.http import JsonResponse
+from django.conf import settings
 
 from .forms import CustomRegisterForm
 from .models import (
     Post, Category, Comment, Subscriber,
-    Favorite, SavedArticle, SavedPost, JournalistRequest
+    Favorite, SavedArticle, SavedPost, JournalistRequest, Like, Activity
 )
 
 # Optional serializer (API)
@@ -60,32 +64,38 @@ def home(request):
         articles = []
 
     local_posts = Post.objects.filter(status="published").order_by("-created_at")[:10]
-    return render(request, "sabuzz/index.html", {"articles": articles, "local_posts": local_posts})
+
+    profile = None
+    if request.user.is_authenticated:
+        try:
+            profile = Profile.objects.get(user=request.user)
+        except Profile.DoesNotExist:
+            profile = None
+
+    return render(request, "sabuzz/index.html", {"articles": articles, "local_posts": local_posts, "profile": profile, })
 
 
 # -------------------------
 # Weather widget (small)
 # -------------------------
 def weather_widget(request):
-    lat, lon = -26.2041, 28.0473
-    url = (
-        "https://api.open-meteo.com/v1/forecast?"
-        f"latitude={lat}&longitude={lon}&current_weather=true&timezone=Africa/Johannesburg"
-    )
-    weather = {}
-    try:
-        r = requests.get(url, timeout=5)
-        data = r.json()
-        current = data.get("current_weather", {})
-        if current:
-            weather = {
-                "temperature": current.get("temperature"),
-                "windspeed": current.get("windspeed"),
-            }
-    except Exception:
-        weather = None
+    lat = request.GET.get("lat")
+    lon = request.GET.get("lon")
 
-    return render(request, "sabuzz/weather.html", {"weather": weather})
+    api_key= settings.OPENWEATHER_API_KEY
+
+    if not api_key:
+        return JsonResponse ({"error": "Missing API key"}, status = 400)
+
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={api_key}"
+    
+    r = requests.get(url).json()
+
+    return JsonResponse({
+        "city": r.get("name"),
+        "temperature": r["main"]["temp"] if "main" in r else None,
+    })
+
 
 
 # -------------------------
@@ -118,6 +128,33 @@ def login_user(request):
 
     return render(request, "sabuzz/login.html")
 
+"""
+Manual password reset view.
+GET: Show reset form
+POST: Process password reset
+"""
+
+def manual_reset(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, "sabuzz/manual_reset.html")
+
+        try:
+            user = User.objects.get(username=username)
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, "Password reset successful. You can now log in.")
+            return redirect("login")
+        except User.DoesNotExist:
+            messages.error(request, "Username does not exist.")
+            return render(request, "sabuzz/manual_reset.html")
+        
+    return render(request, "sabuzz/manual_reset.html")
 
 def logout_user(request):
     logout(request)
@@ -152,115 +189,170 @@ def register_user(request):
 # POSTS (Journalist CRUD)
 # -------------------------
 @login_required
-def add_post(request):
-    # Only approved journalists (or superuser) can create posts
-    if not is_journalist(request.user):
-        messages.error(request, "Only approved journalists can create posts.")
-        return redirect("home")
-
+def edit_post(request, post_id):
+    # Get the post or 404
+    post = get_object_or_404(Post, id=post_id)
+ 
+    # Permission: journalists can only edit their own posts
+    if not request.user.is_superuser and post.author != request.user:
+        messages.error(request, "You do not have permission to edit this post.")
+        return redirect("dashboard")
+ 
     categories = Category.objects.all()
-
+ 
     if request.method == "POST":
-        # Collect data
         title = request.POST.get("title", "").strip()
         content = request.POST.get("content", "").strip()
         category_id = request.POST.get("category") or None
-
+        image = request.FILES.get("image")
+        action = request.POST.get("action")  # "draft" or "submit"
+        status = "pending" if action == "submit" else "draft"
+ 
+        if not title or not content:
+            messages.error(request, "Title and Content are required.")
+            return render(request, "sabuzz/add_post.html", {
+                "post": post,
+                "categories": categories
+            })
+ 
         data = {
             "title": title,
             "content": content,
             "author": request.user.id,
-            "category": category_id,
-            "status": "pending",  # journalist posts start pending for admin approval
+            "status": status,
         }
-
+        if category_id:
+            data["category"] = category_id
+ 
         if PostSerializer:
-            serializer = PostSerializer(data=data)
+            serializer = PostSerializer(post, data=data, partial=True)
             if serializer.is_valid():
-                serializer.save()
-                messages.success(request, "Post submitted for approval.")
+                saved_post = serializer.save()
+                if image:
+                    saved_post.image = image
+                    saved_post.save()
+                messages.success(
+                    request,
+                    "Post updated and sent for approval." if status == "pending" else "Post saved as draft."
+                )
                 return redirect("dashboard")
             else:
-                messages.error(request, "Error submitting your post. Check required fields.")
+                messages.error(request, "Error updating your post. Please check your inputs.")
         else:
-            # Fallback: create model instance directly
-            post = Post(
-                title=title,
-                content=content,
-                author=request.user,
-                status="pending"
-            )
+            # Without serializer
+            post.title = title
+            post.content = content
+            post.status = status
             try:
                 if category_id:
                     post.category = Category.objects.get(id=int(category_id))
-            except Exception:
-                pass
+            except Category.DoesNotExist:
+                post.category = None
+            if image:
+                post.image = image
             post.save()
-            messages.success(request, "Post submitted for approval.")
+            messages.success(
+                request,
+                "Post updated and sent for approval." if status == "pending" else "Post saved as draft."
+            )
+            return redirect("dashboard")
+ 
+    return render(request, "sabuzz/add_post.html", {
+        "post": post,
+        "categories": categories
+    })
+ 
+@login_required
+def add_post(request):
+    # Only approved journalists (or superuser) can create posts
+    if not is_journalist(request.user):
+        messages.error(request, "Only approved journalists can create posts.")
+        return redirect("dashboard")  # redirect to dashboard instead of home
+ 
+    categories = Category.objects.all()
+ 
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        content = request.POST.get("content", "").strip()
+        category_id = request.POST.get("category") or None
+        image = request.FILES.get("image")
+        action = request.POST.get("action")  # "draft" or "submit"
+        status = "pending" if action == "submit" else "draft"
+ 
+        # Validation
+        if not title or not content:
+            messages.error(request, "Title and Content are required.")
+            return render(request, "sabuzz/add_post.html", {"categories": categories})
+ 
+        data = {
+            "title": title,
+            "content": content,
+            "author": request.user.id,
+            "status": status,
+        }
+        if category_id:
+            data["category"] = category_id
+ 
+        if PostSerializer:
+            # Use serializer if available
+            serializer = PostSerializer(data=data)
+            if serializer.is_valid():
+                post = serializer.save()
+                if image:
+                    post.image = image
+                    post.save()
+                messages.success(
+                    request,
+                    "Post saved as draft." if status == "draft" else "Post submitted for approval."
+                )
+                return redirect("dashboard")
+            else:
+                messages.error(request, "Error creating post. Please check your inputs.")
+        else:
+            # Fallback without serializer
+            post = Post(title=title, content=content, author=request.user, status=status)
+            if category_id:
+                try:
+                    post.category = Category.objects.get(id=int(category_id))
+                except Category.DoesNotExist:
+                    post.category = None
+            if image:
+                post.image = image
+            post.save()
+            messages.success(
+                request,
+                "Post saved as draft." if status == "draft" else "Post submitted for approval."
+            )
             return redirect("dashboard")
 
     return render(request, "sabuzz/add_post.html", {"categories": categories})
 
-
 @login_required
-def edit_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    # Allow superuser or the original author who is a journalist
-    if not (request.user.is_superuser or (request.user == post.author and is_journalist(request.user))):
-        return HttpResponseForbidden("You don't have permission to edit this post.")
-
-    categories = Category.objects.all()
-    if request.method == "POST":
-        title = request.POST.get("title", post.title).strip()
-        content = request.POST.get("content", post.content).strip()
-        category_id = request.POST.get("category") or (post.category.id if post.category else None)
-
-        data = {
-            "title": title,
-            "content": content,
-            "author": post.author.id,
-            "category": category_id,
-            "status": post.status,
-        }
-
-        if PostSerializer:
-            serializer = PostSerializer(post, data=data)
-            if serializer.is_valid():
-                serializer.save()
-                messages.success(request, "Post updated.")
-                return redirect("dashboard")
-            else:
-                messages.error(request, "Error updating post.")
-        else:
-            post.title = title
-            post.content = content
-            try:
-                if category_id:
-                    post.category = Category.objects.get(id=int(category_id))
-            except Exception:
-                pass
-            post.save()
-            messages.success(request, "Post updated.")
-            return redirect("dashboard")
-
-    return render(request, "sabuzz/edit_post.html", {"post": post, "categories": categories})
-
-
-@login_required
-@require_POST
 def delete_post(request, post_id):
+    # Get the post or return 404
     post = get_object_or_404(Post, id=post_id)
+ 
+    # Only the author (journalist) or superuser can delete
     if not (request.user.is_superuser or (request.user == post.author and is_journalist(request.user))):
         return HttpResponseForbidden("You don't have permission to delete this post.")
-    post.delete()
-    messages.success(request, "Post deleted.")
-    return redirect("dashboard" if is_journalist(request.user) else "home")
-
+ 
+    # Handle POST → actually delete
+    if request.method == "POST":
+        post.delete()
+        messages.success(request, "Post deleted successfully.")
+        # Redirect to dashboard for journalists, home for others
+        return redirect("dashboard" if is_journalist(request.user) else "home")
+ 
+    # Handle GET → show confirmation page
+    return render(request, "sabuzz/confirm_delete.html", {
+        "object": post,
+        "type": "post"
+    })
 
 # -------------------------
 # Dashboard & lists (journalist)
 # -------------------------
-@user_passes_test(is_journalist)
+"""@user_passes_test(is_journalist)
 def dashboard(request):
     posts_count = Post.objects.count()
     categories_count = Category.objects.count()
@@ -271,8 +363,105 @@ def dashboard(request):
         "categories_count": categories_count,
         "subscribers_count": subscribers_count,
         "comments_count": comments_count,
+    })"""
+
+
+@login_required
+def dashboard(request):
+    user = request.user
+
+    if user.is_superuser:
+        # Admin dashboard
+        posts_count = Post.objects.count()
+        categories_count = Category.objects.count()
+        subscribers_count = Subscriber.objects.count()
+        comments_count = Comment.objects.count()
+        likes_count = Like.objects.count()
+        recent_activities = Activity.objects.select_related('user', 'object').order_by('-timestamp')[:10]
+
+        users = User.objects.all().order_by('-date_joined')
+        posts = Post.objects.select_related('author', 'category').all().order_by('-created_at')
+        comments = Comment.objects.select_related('user', 'post').all().order_by('-date_posted')
+
+        return render(request, "sabuzz/dashboard.html", {
+            "posts_count": posts_count,
+            "categories_count": categories_count,
+            "subscribers_count": subscribers_count,
+            "comments_count": comments_count,
+            "likes_count": likes_count,
+            "recent_activities": recent_activities,
+            "users": users,
+            "posts": posts,
+            "comments": comments,
+        })
+
+    # Journalist dashboard
+    posts_count = Post.objects.filter(author=user).count()
+    categories_count = Category.objects.count()
+    comments_count = Comment.objects.filter(post__author=user).count()
+    likes_count = Like.objects.filter(post__author=user).count()
+    recent_activities = Activity.objects.filter(user=user).order_by('-timestamp')[:10]
+
+    drafts = Post.objects.filter(author=user, status="draft").order_by('-created_at')
+    pending = Post.objects.filter(author=user, status="pending").order_by('-created_at')
+    published = Post.objects.filter(author=user, status="published").order_by('-created_at')
+
+    return render(request, "sabuzz/dashboard.html", {
+        "posts_count": posts_count,
+        "categories_count": categories_count,
+        "comments_count": comments_count,
+        "likes_count": likes_count,
+        "recent_activities": recent_activities,
+        "drafts": drafts,
+        "pending": pending,
+        "published": published,
     })
 
+
+# Admin user table
+@user_passes_test(lambda u: u.is_superuser)
+def dashboard_users(request):
+    users = User.objects.all().order_by('-date_joined')
+    return render(request, "sabuzz/dashboard_users.html", {"users": users})
+
+
+# Admin post table
+@user_passes_test(lambda u: u.is_superuser)
+def dashboard_posts(request):
+    posts = Post.objects.select_related('author', 'category').all().order_by('-created_at')
+    return render(request, "sabuzz/dashboard_posts.html", {"posts": posts})
+
+
+# Admin comment table
+@user_passes_test(lambda u: u.is_superuser)
+def dashboard_comments(request):
+    comments = Comment.objects.select_related('user', 'post').all().order_by('-date_posted')
+    return render(request, "sabuzz/dashboard_comments.html", {"comments": comments})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def edit_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == "POST":
+        user.username = request.POST.get("username", user.username)
+        user.email = request.POST.get("email", user.email)
+        user.is_active = bool(request.POST.get("is_active", True))
+        user.save()
+        messages.success(request, "User updated.")
+        return redirect("dashboard_users")
+    return render(request, "sabuzz/edit_user.html", {"user_obj": user})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@require_POST
+def delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if user.is_superuser:
+        messages.error(request, "Cannot delete superuser.")
+    else:
+        user.delete()
+        messages.success(request, "User deleted.")
+    return redirect("dashboard_users")
 
 @user_passes_test(is_journalist)
 def subscribers_list(request):
@@ -558,3 +747,32 @@ def search_news(request):
         except Exception:
             pass
     return render(request, "sabuzz/search.html", {"query": query, "articles": articles})
+
+@login_required
+def update_profile(request):
+    profile = get_object_or_404(Profile, user=request.user)
+
+    # Determine which form to use based on role
+    if profile.role == 'user':
+        form_class = UserProfileForm
+    elif profile.role == 'journalist':
+        form_class = JournalistProfileForm
+    else:
+        form_class = AdminProfileForm
+
+    # Handle form submission
+    if request.method == 'POST':
+        form = form_class(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('profile_detail')
+    else:
+        form = ProfileForm(instance=profile)
+
+    return render(request, 'sabuzz/update_profile.html', {'form': form})
+
+
+@login_required
+def profile_detail(request):
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    return render(request, "sabuzz/profile_detail.html", {"profile": profile})

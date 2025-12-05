@@ -1,4 +1,8 @@
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,6 +28,8 @@ INSTALLED_APPS = [
 
     # Your main app
     'sabuzz',
+
+    'widget_tweaks',
 ]
 
 # ============================================================
@@ -113,7 +119,7 @@ STATICFILES_DIRS = [
 ]
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # ============================================================
 # DJANGO REST FRAMEWORK (IMPORTANT)
@@ -130,3 +136,8 @@ REST_FRAMEWORK = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ============================================================
+# WEATHER API CONFIGURATION
+# ============================================================
+OPENWEATHER_API_KEY=os.getenv('OPENWEATHER_API_KEY')
