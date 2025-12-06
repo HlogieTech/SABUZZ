@@ -19,7 +19,7 @@
                 <td class="px-6 py-4 space-x-2">
                     {% if request.user == post.author or request.user.is_superuser %}
                         <a href="{% url 'add_post' post.id %}" class="text-yellow-500 hover:underline">Edit</a>
-                        <a href="{% url 'delete_post' post.id %}" onclick="return confirm('Are you sure you want to delete this post?');" class="text-red-500 hover:underline">Delete</a>
+                        <a href="{% url 'confirm_delete' post.id %}" onclick="return confirm('Are you sure you want to delete this post?');" class="text-red-500 hover:underline">Delete</a>
                     {% endif %}
                     <a href="{% url 'post_detail' post.id %}" class="text-blue-500 hover:underline">View</a>
                 </td>

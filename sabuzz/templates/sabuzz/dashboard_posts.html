@@ -34,7 +34,7 @@
             <td class="py-3 px-6">{{ post.created_at|date:"Y-m-d H:i" }}</td>
             <td class="py-3 px-6 flex space-x-2">
                 <a href="{% url 'add_post' post.id %}" class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Edit</a>
-                <form action="{% url 'delete_post' post.id %}" method="POST" class="inline">
+                <form action="{% url 'confirm_delete' post.id %}" method="POST" class="inline">
                     {% csrf_token %}
                     <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="return confirm('Delete this post?');">Delete</button>
                 </form>

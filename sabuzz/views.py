@@ -12,8 +12,7 @@ from .forms import UserProfileForm, JournalistProfileForm, AdminProfileForm, Pro
 from .models import Profile
 from django.http import JsonResponse
 from django.conf import settings
-
-from .forms import CustomRegisterForm
+from .forms import CustomRegisterForm, LoginForm
 from .models import (
     Post, Category, Comment, Subscriber,
     Favorite, SavedArticle, SavedPost, JournalistRequest, Like, Activity
@@ -103,31 +102,49 @@ def weather_widget(request):
 # -------------------------
 def login_user(request):
     if request.method == "POST":
-        username = request.POST.get("username", "")
-        password = request.POST.get("password", "")
-        user = authenticate(request, username=username, password=password)
-
-        if user:
-            # If user applied for journalist and request is still pending, show message instead of granting dashboard
-            pending_request = JournalistRequest.objects.filter(user=user, status="pending").first()
+        form = LoginForm(request, data=request.POST)
+ 
+        if form.is_valid():
+            user = form.get_user()
+ 
+            # Check pending journalist application
+            pending_request = JournalistRequest.objects.filter(
+                user=user, status="pending"
+            ).first()
+ 
             if pending_request:
-                messages.warning(request, "Your journalist application is still pending approval.")
-                # show login page with note (do not log them into dashboard)
-                return render(request, "sabuzz/login.html", {"pending_request": True, "username": username})
-
-            # If user is a journalist (approved) or superuser -> dashboard
-            if is_journalist(user):
-                login(request, user)
-                return redirect("dashboard")
-
-            # normal user login
+                messages.warning(
+                    request,
+                    "Your journalist application is still pending approval."
+                )
+                return render(
+                    request,
+                    "sabuzz/login.html",
+                    {"form": form, "pending_request": True},
+                )
+ 
+            # Log in user
             login(request, user)
+ 
+            # SUPERUSER → dashboard
+            if user.is_superuser:
+                return redirect("dashboard")
+ 
+            # JOURNALIST → dashboard (using your helper)
+            if is_journalist(user):
+                return redirect("dashboard")
+ 
+            # NORMAL USER → home
             return redirect("home")
-
-        messages.error(request, "Incorrect username or password.")
-
-    return render(request, "sabuzz/login.html")
-
+ 
+        else:
+            messages.error(request, "Incorrect username or password.")
+ 
+    else:
+        form = LoginForm()
+ 
+    return render(request, "sabuzz/login.html", {"form": form})
+ 
 """
 Manual password reset view.
 GET: Show reset form
@@ -638,8 +655,7 @@ def delete_comment(request, comment_id):
     c.delete()
     messages.success(request, "Comment deleted.")
     return redirect("post_detail", post_id=post_id)
-
-
+    
 # -------------------------
 # Saved/favorites etc
 # -------------------------
