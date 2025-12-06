@@ -644,7 +644,6 @@ def edit_comment(request, comment_id):
 
     return render(request, "sabuzz/edit_comment.html", {"comment": c})
 
-
 @login_required
 @require_POST
 def delete_comment(request, comment_id):

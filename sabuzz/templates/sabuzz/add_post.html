@@ -6,7 +6,21 @@
         <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
             {% if post %}Edit Post{% else %}Add Post{% endif %}
         </h2>
-    
+        
+        <!-- Messages -->
+        {% if messages %}
+            <div class="space-y-2">
+                {% for message in messages %}
+                    <p class="px-4 py-2 rounded
+                        {% if message.tags == 'error' %} bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-200
+                        {% elif message.tags == 'success' %} bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200
+                        {% else %} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 {% endif %}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
         <form method="post" enctype="multipart/form-data" class="space-y-4">
             {% csrf_token %}
     
