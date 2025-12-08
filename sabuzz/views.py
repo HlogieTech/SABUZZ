@@ -737,6 +737,7 @@ def posts_page(request):
 
 # -------------------------
 # category and search
+#only for API
 # -------------------------
 def category_news(request, category):
     url = f"https://newsdata.io/api/1/news?country=za&category={category}&apikey={API_KEY}"
@@ -786,7 +787,7 @@ def update_profile(request):
 
     return render(request, 'sabuzz/update_profile.html', {'form': form})
 
-
+#creates profile after login
 @login_required
 def profile_detail(request):
     profile, created = Profile.objects.get_or_create(user=request.user)
